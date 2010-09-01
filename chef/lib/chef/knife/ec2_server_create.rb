@@ -110,6 +110,12 @@ class Chef
         :description => "Full path to location of template to use",
         :default => false
 
+      option :user_data,
+        :long => "--user-data DATA",
+        :short => "-u DATA",
+        :description => "Full path to the location of the user data to pass when booting the instance",
+        :default => nil
+
       def h
         @highline ||= HighLine.new
       end
@@ -127,14 +133,23 @@ class Chef
           :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key],
           :region => config[:region]
         )
-
-        server = connection.servers.create(
+        create_options = {
           :image_id => config[:image],
           :groups => config[:security_groups],
           :flavor_id => config[:flavor],
           :key_name => Chef::Config[:knife][:aws_ssh_key_id],
           :availability_zone => config[:availability_zone]
-        )
+        }
+        
+        if config[:user_data]
+          begin
+            create_options.merge!({:user_data => File.read(config[:user_data])})
+          rescue
+            Chef::Log.warn "Cannot read #{confi[:user_data]}: #{$!.inspect}. Ignoring option."
+          end
+        end
+
+        server = connection.servers.create(create_options)
 
         puts "#{h.color("Instance ID", :cyan)}: #{server.id}"
         puts "#{h.color("Flavor", :cyan)}: #{server.flavor_id}"
