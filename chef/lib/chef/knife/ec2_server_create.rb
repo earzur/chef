@@ -145,7 +145,7 @@ class Chef
           begin
             create_options.merge!({:user_data => File.read(config[:user_data])})
           rescue
-            Chef::Log.warn "Cannot read #{confi[:user_data]}: #{$!.inspect}. Ignoring option."
+            Chef::Log.warn "Cannot read #{config[:user_data]}: #{$!.inspect}. Ignoring option."
           end
         end
 
